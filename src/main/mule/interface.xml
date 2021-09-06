@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="b1637d29-8ff8-40d7-83f3-1310d7431c21" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="b249a978-362b-44c2-b98c-6a29d2b8fb58" >
+		<db:my-sql-connection host="127.0.0.1" port="3306" user="root" password="mule" database="poc" />
+	</db:config>
+	<flow name="postEmployee" doc:id="7d92d8e0-a2cb-48d7-bb33-3116fd266ef8" >
+		<http:listener doc:name="Listener" doc:id="0365f9f8-1dd4-41d8-a8a4-b0418cd50b27" config-ref="HTTP_Listener_config" path="/poc" allowedMethods="POST"/>
+		<db:insert doc:name="Insert" doc:id="728afc35-50c1-4f32-9923-eab0c466d33b" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO employee (ID, name, Email, address, postal, country) VALUES (:ID, :name, :Email, :address, :postal, :country)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	ID: 2,
+	name: "ram",
+	Email: "ram@gmail.com",
+	address: "ctc",
+	postal: 8888,
+	country: "india"
+}]]]></db:input-parameters>
+		</db:insert>
+	</flow>
+	<flow name="getEmployee" doc:id="0f1df54e-1bff-430c-bad5-c88f33ddfaaf" >
+		<http:listener doc:name="Listener" doc:id="5180c7db-59a1-4204-a60e-3fc18dc723f7" config-ref="HTTP_Listener_config" path="/poc" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="b6f54735-eeea-40bf-8b50-b14b9fabedd9" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT *from employee;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="42c4ea0f-0cde-4bed-96ef-922c277ed47f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getEmploeeByID" doc:id="f437154d-08dc-4b65-b8ee-6e76ba3ac7a3" >
+		<http:listener doc:name="Copy_of_Listener" doc:id="b7492ea5-4060-4eb6-8f99-f4f1bc4abe75" config-ref="HTTP_Listener_config" path="/pocID" allowedMethods="GET" />
+		<db:select doc:name="Copy_of_Select" doc:id="15737cdc-723c-4c1b-9196-d83a04107a35" config-ref="Database_Config" >
+			<db:sql ><![CDATA[SELECT *from employee
+WHERE ID =ID;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="8adaeddc-797e-492b-a082-1f809ffaf97c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="update" doc:id="a9c38be3-0fb5-42ab-9ff6-488f168aa98f" >
+		<http:listener doc:name="Listener" doc:id="1d9305fb-bbe2-4829-bc17-6bb2a0d5865f" config-ref="HTTP_Listener_config" path="/update"/>
+		<db:update doc:name="Update" doc:id="f6f885ae-17e5-4931-ba65-e37bd11fa22f" config-ref="Database_Config">
+			<db:sql ><![CDATA["UPDATE employee SET ID = :ID" ]]></db:sql>
+		</db:update>
+	</flow>
+	<flow name="delete" doc:id="3cd6c73a-05e8-422a-bb83-115161c49423" >
+		<http:listener doc:name="Listener" doc:id="09312d65-f097-42e3-8def-90cd2d03fd8d" config-ref="HTTP_Listener_config" path="/delete"/>
+		<db:delete doc:name="Delete" doc:id="60b8a69b-7745-43dd-b7d2-3485411c8b0f" config-ref="Database_Config">
+			<db:sql ><![CDATA[DELETE from employee where ID = :ID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	ID: 2
+}]]]></db:input-parameters>
+		</db:delete>
+	</flow>
+</mule>
